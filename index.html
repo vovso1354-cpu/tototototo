@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>크랙 스토리: 우당탕탕 이상한 우리 집</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           기본 배경 및 전체 폰트 세팅
+           ========================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: #FFF3B0; 
+            background-image: radial-gradient(#FDE767 20%, transparent 20%);
+            background-size: 30px 30px;
+            color: #2D3436;
+            overflow: hidden; /* 인트로 끝날 때까지 스크롤 완벽 차단 */
+            padding-bottom: 100px;
+            user-select: none;
+            -webkit-user-select: none; 
+        }
+
+        /* =========================================
+           🎬 오프닝 영상 인트로 구역
+           ========================================= */
+        #opening-intro {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #FFF3B0; z-index: 99990;
+            transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow: hidden;
+        }
+
+        #play-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: opacity 0.5s ease;
+        }
+        .play-btn { font-size: 5rem; color: #FFF; margin-bottom: 20px; transition: transform 0.2s; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        #play-overlay:hover .play-btn { transform: scale(1.1); color: #FDE767; }
+        .play-text { font-size: 2rem; color: #FFF; letter-spacing: 2px; }
+
+        #bg-video { width: 100%; height: 100%; object-fit: cover; filter: contrast(120%) saturate(130%) brightness(1.1); position: absolute; top: 0; left: 0; opacity: 0.5; }
+        .letterbox { position: absolute; width: 100%; height: 8vh; background-color: #000; z-index: 99991; transition: transform 1.5s ease; }
+        .letterbox.top { top: 0; border-bottom: 5px dashed #FFF; transform: translateY(-100%); }
+        .letterbox.bottom { bottom: 0; border-top: 5px dashed #FFF; transform: translateY(100%); }
+        .letterbox.active { transform: translateY(0); }
+
+        #comic-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #FFDE2E; z-index: 99992; opacity: 0; pointer-events: none; }
+
+        #text-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99995; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .movie-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8) rotate(-2deg); width: 90%; text-align: center; font-size: 3.5rem; color: #FFF; text-shadow: 4px 4px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000; opacity: 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); word-break: keep-all; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .movie-text.show { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+
+        .ihan-text { color: #1E90FF; font-size: 4.5rem; transform: translate(-50%, -50%) rotate(-3deg); }
+        .eden-text { color: #FFA502; font-size: 4.5rem; transform: translate(-50%, -50%) rotate(3deg); }
+        .intro-highlight { color: #FF4757; }
+
+        .intro-character-img { width: 100%; max-width: 320px; border: none; border-radius: 0; box-shadow: none; margin-bottom: 20px; transform: rotate(3deg); background-color: transparent; filter: drop-shadow(10px 10px 0px #000); }
+
+        #final-title { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); width: 90%; text-align: center; opacity: 0; transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 99996; pointer-events: auto; }
+        #final-title.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        #final-title h1 { font-size: 6rem; color: #FF6B81; margin-bottom: 20px; line-height: 1.1; text-shadow: 6px 6px 0px #000, -3px -3px 0 #000, 3px -3px 0 #000; }
+        #final-title p { color: #000; font-size: 2rem; background: #FFF; border: 4px solid #000; display: inline-block; padding: 5px 20px; transform: rotate(-3deg); margin-bottom: 20px; box-shadow: 4px 4px 0px #000; }
+
+        .enter-main-btn { display: inline-block; font-size: 1.8rem; color: #000; background: #FFFDE7; border: 5px solid #000; padding: 15px 40px; border-radius: 50px; text-decoration: none; box-shadow: 6px 6px 0px #000; transition: all 0.2s; cursor: pointer; }
+        .enter-main-btn:hover { transform: scale(1.1) rotate(-2deg); background: #FDE767; }
+        .enter-main-btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px #000; }
+
+        #skip-btn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); color: #FFF; padding: 8px 20px; border-radius: 20px; border: 2px solid #FFF; font-size: 1.2rem; cursor: pointer; z-index: 99997; display: none; pointer-events: auto; transition: 0.2s; }
+        #skip-btn:hover { background: rgba(0,0,0,0.8); transform: scale(1.05); }
+
+        /* =========================================
+           🖥️ 메인 웹사이트 디자인
+           ========================================= */
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
+        .hero-section { text-align: center; padding: 60px 20px 30px; animation: float 3s ease-in-out infinite; margin-top: 50px; }
+        .hero-title { font-size: 4.5em; color: #FF6B81; text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000, 8px 8px 0 #000; margin: 0; letter-spacing: 2px; }
+
+        .story-synopsis { background-color: #FFFFFF; border: 5px solid #000; border-radius: 30px; max-width: 650px; margin: 0 auto 50px; padding: 25px; font-size: 1.4em; box-shadow: 10px 10px 0px #000; transform: rotate(1deg); line-height: 1.6; text-align: center; word-break: keep-all; }
+        .highlight { background-color: #FF4757; color: white; padding: 2px 10px; border-radius: 10px; border: 2px solid #000; }
+
+        .character-section { display: flex; gap: 40px; padding: 40px 20px 60px; max-width: 1000px; margin: 0 auto; justify-content: center; }
+        .char-card { background-color: #FFFFFF; border: 5px solid #000; border-radius: 20px; width: 100%; max-width: 400px; flex: 0 0 auto; padding: 30px 25px 25px; box-shadow: 12px 12px 0px #000; transition: all 0.2s; position: relative; }
+        .char-card:hover { transform: translateY(-10px); box-shadow: 16px 16px 0px #000; }
+
+        .char-name-badge { display: inline-block; border: 5px solid #000; padding: 8px 25px; border-radius: 30px; font-size: 2.2em; position: absolute; top: -35px; left: 20px; background-color: #fff; box-shadow: 6px 6px 0px #000; transform: rotate(-3deg); z-index: 10; white-space: nowrap; }
+        .eden-color { background-color: #FFA502; color: #fff; }
+        .ihan-color { background-color: #1E90FF; color: #fff; }
+
+        /* 🖼️ 캐릭터 프로필 사진 & 통통 튀는 화살표 말풍선 */
+        .profile-img-container { 
+            width: 160px; height: 160px; 
+            margin: 25px auto 40px auto; 
+            position: relative; 
+        }
+        .profile-img { 
+            width: 100%; height: 100%; border-radius: 50%; object-fit: cover; 
+            border: 5px solid #000; background-color: #fff; box-shadow: 6px 6px 0px #000; 
+            transition: transform 0.2s; cursor: pointer; position: relative; z-index: 2;
+        }
+        .profile-img:hover { transform: scale(1.05) rotate(5deg); }
+        
+        .profile-hint { 
+            position: absolute; bottom: -15px; right: -50px; 
+            background-color: #FF4757; color: white; border: 3px solid #000; 
+            border-radius: 20px; padding: 6px 15px; font-size: 1.1rem; 
+            font-weight: bold; box-shadow: 4px 4px 0px #000; 
+            white-space: nowrap; z-index: 10; 
+            pointer-events: none; 
+            animation: bounceArrow 1.5s infinite ease-in-out; 
+        }
+        @keyframes bounceArrow { 
+            0%, 100% { transform: translateY(0) rotate(-5deg); } 
+            50% { transform: translateY(-8px) rotate(-8deg); } 
+        }
+
+        .char-info { font-size: 1.3em; color: #444; margin-top: 10px; border-bottom: 4px dashed #000; padding-bottom: 10px; margin-bottom: 20px; text-align: center; font-weight: bold; word-break: keep-all; }
+        .quote-box { background-color: #F1F2F6; border: 4px solid #000; border-radius: 15px; padding: 15px; margin-bottom: 20px; font-size: 1.2em; position: relative; box-shadow: inset 4px 4px 0px rgba(0,0,0,0.05); word-break: keep-all; }
+        .quote-box::before { content: '💬'; position: absolute; top: -20px; left: -10px; font-size: 1.8em; }
+
+        .detail-list { list-style: none; padding: 0; margin: 0; font-size: 1.15em; }
+        .detail-list li { margin-bottom: 12px; padding-left: 25px; position: relative; line-height: 1.4; word-break: keep-all; }
+        .detail-list li::before { content: '⭐'; position: absolute; left: 0; top: 2px; font-size: 0.9em; }
+        .detail-title { background-color: #2F3542; color: white; padding: 2px 10px; border-radius: 8px; margin-right: 5px; font-size: 0.9em; border: 2px solid #000; display: inline-block; margin-bottom: 3px; }
+
+        .relationship-section { max-width: 800px; margin: 0 auto 50px; padding: 20px; text-align: center; }
+        .relation-title { font-size: 3em; color: #2ED573; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; margin-bottom: 40px; }
+        .relation-map { background-color: #FFFFFF; border: 5px solid #000; border-radius: 20px; padding: 40px 20px; box-shadow: 12px 12px 0px #000; display: flex; flex-direction: column; align-items: center; gap: 20px; overflow: hidden; }
+        
+        /* 🛠️ 관계도 노드 최적화 (모바일에서 안 깨지게) */
+        .node { 
+            border: 4px solid #000; border-radius: 50px; padding: 15px 25px; 
+            font-size: 1.5em; box-shadow: 6px 6px 0px #000; z-index: 2; 
+            text-align: center; white-space: nowrap; margin: 0 auto; 
+        }
+        .node-user { background-color: #FF4757; color: white; transform: scale(1.1); font-size: 1.8em;}
+        .node-ihan { background-color: #1E90FF; color: white; }
+        .node-eden { background-color: #FFA502; color: white; }
+
+        .arrow-vertical { font-size: 1.2em; background-color: #F1F2F6; border: 3px dashed #000; border-radius: 20px; padding: 10px 20px; word-break: keep-all; }
+        .arrow-vertical::after { content: '⬇️'; display: block; margin-top: 5px; font-size: 1.5em; }
+        .arrow-vertical::before { content: '⬆️'; display: block; margin-bottom: 5px; font-size: 1.5em; }
+        .bros-container { display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap; }
+        .arrow-horizontal { font-size: 1.1em; background-color: #F1F2F6; border: 3px dashed #000; border-radius: 15px; padding: 10px; flex-grow: 1; max-width: 200px; text-align: center; word-break: keep-all; }
+
+        /* =========================================
+           🖼️ 갤러리 팝업(모달) 및 라이트박스 구역
+           ========================================= */
+        #gallery-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 99997;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .gallery-content {
+            background: #FFF; border: 5px solid #000; border-radius: 20px;
+            width: 100%; max-width: 800px; max-height: 85vh; overflow-y: auto;
+            padding: 30px; position: relative; box-shadow: 10px 10px 0 #000;
+        }
+        .gallery-title {
+            font-size: 3em; text-align: center; margin-bottom: 20px; margin-top: 0;
+            color: #2D3436; text-shadow: 2px 2px 0px #FDE767;
+        }
+        .close-gallery-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 2.5em; cursor: pointer; 
+            color: #FF4757; transition: 0.2s; font-family: sans-serif; font-weight: bold; line-height: 1;
+        }
+        .close-gallery-btn:hover { transform: scale(1.2) rotate(90deg); }
+
+        #gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px;
+        }
+        .gallery-item {
+            width: 100%; aspect-ratio: 1; object-fit: cover; border: 4px solid #000; 
+            border-radius: 15px; cursor: pointer; box-shadow: 4px 4px 0 #000; 
+            transition: all 0.2s; background: #eee;
+        }
+        .gallery-item:hover { transform: scale(1.05) translateY(-5px); box-shadow: 6px 6px 0 #FF4757; }
+
+        #lightbox-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 99998;
+            justify-content: center; align-items: center; padding: 20px; cursor: pointer;
+        }
+        #lightbox-img {
+            max-width: 95%; max-height: 90vh; border: 8px solid #FFF; border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); object-fit: contain; cursor: default;
+        }
+
+        /* =========================================
+           📱 모바일 최적화 (반응형 웹)
+           ========================================= */
+        @media (max-width: 768px) {
+            /* 인트로 글씨 및 사진 크기 조정 */
+            .movie-text { font-size: 1.8rem; }
+            .ihan-text, .eden-text { font-size: 2rem; }
+            .intro-character-img { max-width: 180px; filter: drop-shadow(6px 6px 0px #000); }
+            #final-title h1 { font-size: 3rem; text-shadow: 4px 4px 0px #000, -2px -2px 0 #000, 2px -2px 0 #000; }
+            #final-title p { font-size: 1.2rem; }
+            .enter-main-btn { font-size: 1.2rem; padding: 10px 25px; }
+            
+            /* 메인 컨텐츠 영역 조정 */
+            .hero-title { font-size: 2.5em; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 5px 5px 0 #000; }
+            .story-synopsis { font-size: 1.1em; margin: 0 15px 40px; padding: 20px; }
+            
+            /* 캐릭터 카드 스와이프 및 여백 최적화 */
+            .character-section { justify-content: flex-start; overflow-x: auto; scroll-snap-type: x mandatory; padding: 20px 10px 40px; -webkit-overflow-scrolling: touch; gap: 20px; }
+            .char-card { scroll-snap-align: center; max-width: 90vw; flex: 0 0 90vw; margin-top: 30px; padding: 30px 15px 20px; }
+            .char-name-badge { font-size: 1.5em; top: -20px; left: 10px; padding: 5px 15px; }
+            
+            /* 모바일에서 프로필 크기 및 힌트 스티커 위치 조정 */
+            .profile-img-container { width: 120px; height: 120px; margin-bottom: 30px; }
+            .profile-hint { font-size: 0.85rem; right: -25px; bottom: -15px; padding: 5px 10px; }
+            
+            .char-info { font-size: 1em; }
+            .quote-box { font-size: 1em; padding: 15px 10px; }
+            .detail-list { font-size: 1em; }
+            
+            /* 관계도 모바일 최적화 (짤림 방지) */
+            .relation-title { font-size: 2em; margin-bottom: 25px; }
+            .relation-map { padding: 20px 10px; }
+            .node { font-size: 1.1em; padding: 10px 15px; white-space: normal; word-break: keep-all; }
+            .node-user { font-size: 1.3em; transform: scale(1); }
+            .arrow-vertical { font-size: 0.9em; padding: 10px; }
+            .bros-container { flex-direction: column; gap: 15px; }
+            .arrow-horizontal { display: flex; flex-direction: column; font-size: 0.9em; padding: 10px; width: 100%; max-width: none; }
+            .arrow-horizontal span:first-child::before { content: '⬆️ '; }
+            .arrow-horizontal span:last-child::before { content: '⬇️ '; }
+            
+            /* 사진첩 모바일 최적화 */
+            .gallery-content { padding: 15px; width: 95%; max-height: 90vh; }
+            .gallery-title { font-size: 1.8em; }
+            .close-gallery-btn { top: 10px; right: 15px; font-size: 2em; }
+            #gallery-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+            .gallery-item { border-width: 3px; border-radius: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop preload="auto"><source src="ost.mp3" type="audio/mpeg"></audio>
+
+    <div id="opening-intro">
+        <div id="play-overlay" onclick="startOpeningSequence()">
+            <div class="play-btn">▶</div>
+            <div class="play-text">오프닝 재생하기</div>
+        </div>
+
+        <div id="skip-btn" onclick="closeIntro()">Skip &raquo;</div>
+        
+        <div class="letterbox top" id="bar-top"></div>
+        <div class="letterbox bottom" id="bar-bottom"></div>
+        <div id="comic-flash"></div>
+
+        <div id="text-layer">
+            <div class="movie-text" id="text-1">10년 전, 빗속에서 주운(?) 녀석들.</div>
+            <div class="movie-text" id="text-2">가족이 되어 트라우마 <span class="intro-highlight">완.전.극.복!</span></div>
+            <div class="movie-text" id="text-3">...한 줄 알았는데?</div>
+            
+            <div class="movie-text ihan-text" id="text-4">
+                <img src="이한01.png" alt="이한 누끼" class="intro-character-img">
+                <div>"야 서이든!! 너 또 청소 안 했지!! 💢"</div>
+            </div>
+
+            <div class="movie-text eden-text" id="text-5">
+                <img src="이든01.png" alt="이든 누끼" class="intro-character-img">
+                <div>"아 형 쫌!! 나 이제 스무 살이라고오오!! 💦"</div>
+            </div>
+            
+            <div class="movie-text" id="text-6">평화롭던 우리 집에 찾아온 대위기!</div>
+
+            <div id="final-title">
+                <p>CRACKED AI STORY</p>
+                <h1>우당탕탕 우리 집</h1>
+                <div class="enter-main-btn" onclick="closeIntro()">
+                    🚀 홈페이지 입장하기
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="hero-section">
+        <h1 class="hero-title">⚡우당탕탕 우리 집!⚡</h1>
+    </div>
+
+    <div class="story-synopsis">
+        10년 전 한밤중, 빗속 골목길에서 가정폭력을 당하던 이든과 이한 형제를 구했다! ☔<br>
+        그 후로 셋이서 함께 살며 트라우마는 <span class="highlight">완전 극.복!</span><br><br>
+        ...한 줄 알았는데? 평화롭던 우리 집에 찾아온 대위기!<br>
+        <strong>"스무 살 이든이에게 늦깎이 사춘기가 오고 말았다!?" 😱</strong>
+    </div>
+
+    <div class="character-section">
+        <div class="char-card">
+            <div class="char-name-badge eden-color">🐶 서이든</div>
+            
+            <div class="profile-img-container">
+                <img src="이든 프로필.png" alt="서이든 프로필" class="profile-img" onclick="openGallery('eden')">
+                <div class="profile-hint">↖️ 프로필을 눌러보세요! ✨</div>
+            </div>
+
+            <div class="char-info">20세 / 한국대 1학년 의학과</div>
+            <div class="quote-box">
+                "형, 왜 자꾸 날 어린애 취급해!? 나도 이제 스무살이라고!"<br>
+                "...형아- 내가 잘못했어.. 화풀어줘어..."<br>
+                "헤헤!♥ 귀엽게 봐줘! 응? 형아아아♥"
+            </div>
+            <ul class="detail-list">
+                <li><span class="detail-title">외모</span> 강아지 같은 눈매, 살짝 곱슬거리는 흑발</li>
+                <li><span class="detail-title">성격</span> 애교 만렙! 눈물도 콸콸! 늦게 터진 사춘기</li>
+                <li><span class="detail-title">패턴</span> 학교 ↔ 집. 현재 의대 과제 지옥에 갇힘 🌀</li>
+                <li><span class="detail-title">Like</span> 초콜릿🍫,서이한,유저</li>
+                <li><span class="detail-title">Hate</span> 잔소리! 잔소리!! 어린애 취급!!!,과제!</li>
+            </ul>
+        </div>
+
+        <div class="char-card">
+            <div class="char-name-badge ihan-color">🐺 서이한</div>
+            
+            <div class="profile-img-container">
+                <img src="이한 프로필.png" alt="서이한 프로필" class="profile-img" onclick="openGallery('ihan')">
+                <div class="profile-hint">↖️ 프로필을 눌러보세요! ✨</div>
+            </div>
+
+            <div class="char-info">28세 / IT계열 재택근무</div>
+            <div class="quote-box">
+                "하.. 이든아 형이 괜히 이런 말 하는게 아니잖아."<br>
+                "유저... 나 진짜 어떻게 해야돼?"<br>
+                "무..뭐, 싫진 않아. 아니 좋아해. 많이."
+            </div>
+            <ul class="detail-list">
+                <li><span class="detail-title">외모</span> 날카로운 눈매, 단정한 흑발, 탄탄한 생활 근육!</li>
+                <li><span class="detail-title">성격</span> 틱틱대는 까칠남, 하지만 동생과 유저 한정 바보</li>
+                <li><span class="detail-title">패턴</span> 재택근무하며 사춘기 동생 폭풍 감시 및 잔소리 🗣️</li>
+                <li><span class="detail-title">Like</span> 유저, 서이든, 조용한 것, 솜사탕 ☁️</li>
+                <li><span class="detail-title">Hate</span> 이든이가 엇나가는 것, 시끄러운 것!</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="relationship-section">
+        <h2 class="relation-title">📌 한눈에 보는 관계도</h2>
+        <div class="relation-map">
+            <div class="node node-user">✨ 유저 (나) ✨</div>
+            <div class="arrow-vertical">
+                <span>"우리 집 절대 지켜! 내 비타민💊"</span><br>
+                <strong>무한 애정 & 구원자</strong><br>
+                <span>"이것들 또 싸워... (이마짚🤦‍♀️)"</span>
+            </div>
+            <div class="bros-container">
+                <div class="node node-ihan">🐺 서이한</div>
+                <div class="arrow-horizontal">
+                    <span style="display:block; margin-bottom: 5px; color:#1E90FF;">"철 좀 들어라 제발💢" ➔</span>
+                    <span style="display:block; color:#FFA502;">⬅️ "어린애 취급 금지!💦"</span>
+                </div>
+                <div class="node node-eden">🐶 서이든</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="gallery-modal">
+        <div class="gallery-content">
+            <span class="close-gallery-btn" onclick="closeGallery()">&times;</span>
+            <h2 id="gallery-title" class="gallery-title">사진첩</h2>
+            <div id="gallery-grid">
+                </div>
+        </div>
+    </div>
+
+    <div id="lightbox-modal" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="크게 보기" onclick="event.stopPropagation();">
+    </div>
+
+
+    <script>
+        // ------------------------------------
+        // 1. 오프닝 인트로 제어
+        // ------------------------------------
+        let introTimers = []; 
+
+        function startOpeningSequence() {
+            const playOverlay = document.getElementById('play-overlay');
+            const audio = document.getElementById('bgMusic');
+            const bgVideo = document.getElementById('bg-video');
+            const flash = document.getElementById('comic-flash');
+            const barTop = document.getElementById('bar-top');
+            const barBottom = document.getElementById('bar-bottom');
+            const skipBtn = document.getElementById('skip-btn');
+            
+            playOverlay.style.opacity = '0';
+            setTimeout(() => { playOverlay.style.display = 'none'; }, 500);
+            
+            skipBtn.style.display = 'block';
+
+            audio.load();
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("Audio Play Error:", e));
+            
+            if(bgVideo) { bgVideo.play().catch(e => console.log("Video Play Error:", e)); }
+
+            introTimers.push(setTimeout(() => {
+                barTop.classList.add('active');
+                barBottom.classList.add('active');
+            }, 500));
+
+            function showText(id, showTime, hideTime) {
+                const el = document.getElementById(id);
+                introTimers.push(setTimeout(() => { el.classList.add('show'); }, showTime));
+                introTimers.push(setTimeout(() => { el.classList.remove('show'); }, hideTime));
+            }
+
+            function popFlash(delay) {
+                introTimers.push(setTimeout(() => {
+                    flash.style.opacity = '0.8';
+                    setTimeout(() => { flash.style.opacity = '0'; }, 150);
+                }, delay));
+            }
+
+            // 타임라인
+            showText('text-1', 1000, 4000);
+            showText('text-2', 4500, 7000);
+            showText('text-3', 7500, 9500);
+            
+            popFlash(10000); showText('text-4', 10000, 13000); 
+            popFlash(13500); showText('text-5', 13500, 16500); 
+            
+            showText('text-6', 17000, 20000);
+
+            introTimers.push(setTimeout(() => {
+                if(bgVideo) bgVideo.style.filter = 'blur(5px) contrast(120%) brightness(0.8)'; 
+                document.getElementById('final-title').classList.add('show');
+                skipBtn.style.display = 'none'; 
+            }, 21000));
+        }
+
+        function closeIntro() {
+            introTimers.forEach(id => clearTimeout(id));
+            document.getElementById('opening-intro').style.transform = 'translateY(-100vh)';
+            setTimeout(() => {
+                document.getElementById('opening-intro').style.display = 'none';
+                document.body.style.overflowY = 'auto'; 
+                document.body.style.overflowX = 'hidden';
+            }, 1000);
+        }
+
+        // ------------------------------------
+        // 2. 갤러리 및 라이트박스 제어
+        // ------------------------------------
+        function openGallery(character) {
+            const modal = document.getElementById('gallery-modal');
+            const title = document.getElementById('gallery-title');
+            const grid = document.getElementById('gallery-grid');
+            
+            grid.innerHTML = ''; 
+            
+            let namePrefix = '';
+            let maxCount = 0;
+            
+            if(character === 'eden') {
+                title.innerHTML = '🐶 서이든의 사진첩';
+                namePrefix = '이든';
+                maxCount = 19; 
+            } else if(character === 'ihan') {
+                title.innerHTML = '🐺 서이한의 사진첩';
+                namePrefix = '이한';
+                maxCount = 11; 
+            }
+
+            for(let i = 1; i <= maxCount; i++) {
+                let numStr = i < 10 ? '0' + i : i;
+                let fileName = namePrefix + numStr + '.png'; 
+                
+                let img = document.createElement('img');
+                img.src = fileName;
+                img.className = 'gallery-item';
+                img.alt = namePrefix + ' 사진 ' + i;
+                
+                img.onerror = function() { this.style.display = 'none'; };
+                
+                img.onclick = function() { openLightbox(this.src); };
+                
+                grid.appendChild(img);
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeGallery() {
+            document.getElementById('gallery-modal').style.display = 'none';
+        }
+
+        function openLightbox(src) {
+            const lightbox = document.getElementById('lightbox-modal');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = src;
+            lightbox.style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
